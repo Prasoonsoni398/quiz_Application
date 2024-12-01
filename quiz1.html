@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Application</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-image: linear-gradient(120deg, #d26438, #cd475e);
+            margin: 0;
+        }
+
+        .quiz-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 600px;
+            text-align: center;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            color: red;
+        }
+
+        .question {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .options {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .options li {
+            margin-bottom: 8px;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #timer {
+            font-size: 18px;
+            color: #ff4500;
+            margin-top: 10px;
+        }
+
+        #leaderboard {
+            margin-top: 30px;
+            font-size: 18px;
+        }
+
+        #leaderboard table {
+            width: 100%;
+            margin-top: 10px;
+            border-collapse: collapse;
+        }
+
+        #leaderboard th, #leaderboard td {
+            padding: 8px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        #playerNameForm {
+            margin-bottom: 20px;
+            height: 30%;
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <h2>Quiz Application</h2>
+
+    <!-- Player Registration Form -->
+    <div id="playerNameForm">
+        <input type="text" id="playerName" placeholder="Enter your name" />
+        <button onclick="startQuiz()">Start Quiz</button>
+    </div>
+
+    <div id="quiz" style="display: none;">
+        <div class="question" id="question"></div>
+        <ul class="options">
+            <li><input type="radio" name="option" value="A" id="optionA"> <label for="optionA" id="labelA"></label></li>
+            <li><input type="radio" name="option" value="B" id="optionB"> <label for="optionB" id="labelB"></label></li>
+            <li><input type="radio" name="option" value="C" id="optionC"> <label for="optionC" id="labelC"></label></li>
+            <li><input type="radio" name="option" value="D" id="optionD"> <label for="optionD" id="labelD"></label></li>
+        </ul>
+        <div id="timer">Time left: 30s</div>
+        <button onclick="submitAnswer()" id="nextBtn">Next</button>
+    </div>
+
+    <div id="result" style="display: none;">
+        <h3>Your Score: <span id="score"></span></h3>
+        <button onclick="restartQuiz()">Restart Quiz</button>
+        <button onclick="showLeaderboard()">View Leaderboard</button>
+    </div>
+
+    <div id="leaderboard" style="display: none;">
+        <h3>Leaderboard</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Player Name</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody id="leaderboard-list"></tbody>
+        </table>
+        <button onclick="goBackToResult()">Back to Result</button>
+    </div>
+</div>
+
+<script>
+    // Quiz Data
+    const quizData = [
+    {
+            question: "What is the time complexity of Binary Search?",
+            options: ["O(1)", "O(n^2)", "O(log n)", "O(n)"],
+            answer: "C"
+        },
+        {
+            question: "Which data structure is suitable for implementing a stack?",
+            options: ["Array", "Linked List", "Queue", "Tree"],
+            answer: "B"
+        },
+        {
+            question: " What is the purpose of hashing in data structures?",
+            options: [" Sorting", "Searching", "Insertion", "Collision resolution"],
+            answer: "D"
+        },
+        {
+            question:"Which algorithm is used for sorting a linked list? ",
+            options:["Bubble sort","Merge sort","Quick sort","Heap sort"],
+            answer:"B"
+        },
+        {
+            question:"What is the space complexity of a recursive function? ",
+            options:["O(1)","O(n)","O(log n)","O(n^2)"],
+            answer:"B"
+        },
+        {
+            question:"If x + y = 7 and x - y = 3, what is the value of x? ",
+            options:["4","5","6","8"],
+            answer:"B"
+        },
+        {
+            question:"A snail is at the bottom of a 20-foot well. Each day, it climbs up 3 feet, but at night, it slips back 2 feet. How many days will it take for the snail to reach the top? ",
+            options:["18","20","22","25"],
+            answer:"A"
+        },
+        {
+            question:"A bat and a ball together cost $1.10. The bat costs $1.00 more than the ball. How much does the ball cost?",
+            options:["$0.05","$0.10","$0.15","$0.20"],
+            answer:"A"
+        },
+        {
+            question:"What is the next number in the series: 2, 6, 12, 20, 30? ",
+            options:["42","40","38","36"],
+            answer:"A"
+        },
+        {
+            question:"If a car travels 250 miles in 5 hours, what is its average speed? ",
+            options:["25 mph","50 mph","75 mph","100 mph"],
+            answer:"B"
+        },
+        {
+            question:" Which of the following is a valid C data type? ",
+            options:["float","double","char","All of these"],
+            answer:"B"
+        },
+        {
+            question:" What is the difference between = and == in C? ",
+            options:["= is assignment,== is comparison","= is comparison,== is assignment","= is increment,== is decrement","= is decrement,== is increment"],
+            answer:"A"
+        },
+        {
+            question:"Who is the founder of Microsoft?",
+            options:["Bill Gates","steve jobs","Mark Zuckerberg","Larry page"],
+            answer:"A"
+        },
+        {
+            question:"Which planet is known as the Red Planet?", 
+            options:["Earth","Mars","Jupiter","Saturn"],
+            answer:"B"
+        },
+        {
+            question:" Who wrote the book To Kill a Mockingbird? ",
+            options:["F.Scott Fitzgerable","Harper Lee","Jane Austen","J.K. Rowling"],
+            answer:"B"
+        },
+        {
+            question:"Which country is the largest producer of milk?",
+            options:["India","USA","china","Brazil"],
+            answer:"A"
+        },
+        {
+            question:"Who is the CEO of Tesla",
+            options:["Elon Musk","Jeff Bezos","Mark Zuckerberg","Bill Gates"],
+            answer:"A"
+        },
+        {
+            question:"If A is B's father and C is B's son, what is A's relation to C?",
+            options:["Grandfather","Father","Uncle","Brother"],
+            answer:"A"
+        },
+        {
+            question:"If X is Y's sister and Z is Y's brother, what is X's relation to Z?",
+            options:["Sister","Brother","Cousin","Friend"],
+            answer:"A"
+        },
+        {
+            question:"If P is Q's mother and R is Q's son, what is P's relation to R?",
+            options:["GrandMother","Father","Uncle","Brother"],
+            answer:"A"
+        },
+        {
+            question:"If A is B's brother and C is B's wife, what is A's relation to C?",
+            options:["Brother-in-law","Sister-in-law","Uncle","Nephew"],
+            answer:"A"
+        },
+        {
+            question:"If X is Y's father and Z is X's father, what is Z's relation to Y?",
+            options:["Grandfather","Father","Uncle","Brother"],
+            answer:"A"
+        },
+        {
+            question:"If a person is facing west and turns 180 degrees, what direction is he facing? ",
+            options:["East","West","North","South"],
+            answer:"A"
+        },
+        {
+            question:"If south-east is the direction of sunrise, what is the direction of sunset? ",
+            options:[" North-East","North-West","South-West","South-east"],
+            answer:"A"
+        },
+        {
+            question:"If a person is facing north and turn 90 degrees to his right, what direction is he facing ",
+            options:["East","West","North","South"],
+            answer:"A"
+        },
+        {
+            question:"What is the direction of the Magnetic north pole? ",
+            options:["East","West","North","South"],
+            answer:"C"
+        },
+        {
+            question:"If a person is facing south and turns 45 degrees to his left, what direction is he facing? ",
+            options:["South-East","South-West","North-east","North-west"],
+            answer:"B"
+        },
+
+    ];
+
+    let currentQuestion = 0;
+    let score = 0;
+    let playerName = '';
+    let timer;
+    let timeLeft = 30;
+
+    // Start quiz after player enters their name
+    function startQuiz() {
+        playerName = document.getElementById('playerName').value;
+        if (!playerName) {
+            alert("Please enter your name to start the quiz!");
+            return;
+        }
+
+        document.getElementById('playerNameForm').style.display = 'none';
+        document.getElementById('quiz').style.display = 'block';
+
+        loadQuestion();
+    }
+
+    // Load and display the leaderboard
+    function loadLeaderboard() {
+        const leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
+        const leaderboardList = document.getElementById('leaderboard-list');
+        leaderboardList.innerHTML = '';
+
+        leaderboard.sort((a, b) => b.score - a.score); // Sort by score in descending order
+
+        leaderboard.slice(0, 5).forEach((entry, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${entry.playerName}</td>
+                <td>${entry.score}</td>
+            `;
+            leaderboardList.appendChild(row);
+        });
+    }
+
+    // Save score to leaderboard
+    function saveScore() {
+        const leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
+        leaderboard.push({ playerName: playerName, score: score });
+        leaderboard.sort((a, b) => b.score - a.score); // Sort by score in descending order
+        localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+    }
+
+    // Display leaderboard
+    function showLeaderboard() {
+        document.getElementById("result").style.display = "none";
+        document.getElementById("leaderboard").style.display = "block";
+        loadLeaderboard();
+    }
+
+    // Go back to result from leaderboard
+    function goBackToResult() {
+        document.getElementById("leaderboard").style.display = "none";
+        document.getElementById("result").style.display = "block";
+    }
+
+    // Load question and start timer
+    function loadQuestion() {
+        // Reset all radio buttons to unchecked
+        document.querySelectorAll('input[name="option"]').forEach(input => input.checked = false);
+
+        timeLeft = 30; // Reset the timer
+        document.getElementById('timer').innerText = `Time left: ${timeLeft}s`;
+
+        // Display question and options
+        const questionData = quizData[currentQuestion];
+        document.getElementById("question").innerText = questionData.question;
+        document.getElementById("labelA").innerText = "A) " + questionData.options[0];
+        document.getElementById("labelB").innerText = "B) " + questionData.options[1];
+        document.getElementById("labelC").innerText = "C) " + questionData.options[2];
+        document.getElementById("labelD").innerText = "D) " + questionData.options[3];
+
+        // Start the timer
+        startTimer();
+    }
+
+    // Start the countdown timer
+    function startTimer() {
+        timer = setInterval(function() {
+            if (timeLeft > 0) {
+                timeLeft--;
+                document.getElementById('timer').innerText = `Time left: ${timeLeft}s`;
+            } else {
+                clearInterval(timer);
+                submitAnswer(); // Automatically submit answer if time runs out
+            }
+        }, 1000);
+    }
+
+    // Submit answer and go to next question
+    function submitAnswer() {
+        // Get selected answer
+        const selectedOption = document.querySelector('input[name="option"]:checked');
+        if (selectedOption) {
+            const answer = selectedOption.value;
+            if (answer === quizData[currentQuestion].answer) {
+                score++;
+            }
+        }
+
+        currentQuestion++;
+        if (currentQuestion < quizData.length) {
+            loadQuestion();
+        } else {
+            saveScore(); // Save score to leaderboard
+            displayResult();
+        }
+        clearInterval(timer); // Clear timer when moving to next question
+    }
+
+    // Display result after finishing the quiz
+    function displayResult() {
+        // Hide quiz and show result
+        document.getElementById("quiz").style.display = "none";
+        document.getElementById("result").style.display = "block";
+        document.getElementById("score").innerText = `${score}/${quizData.length}`;
+    }
+
+    // Restart quiz
+    function restartQuiz() {
+        currentQuestion = 0;
+        score = 0;
+        document.getElementById("quiz").style.display = "block";
+        document.getElementById("result").style.display = "none";
+        loadQuestion();
+    }
+</script>
+
+</body>
+</html>
